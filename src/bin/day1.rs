@@ -133,7 +133,8 @@ fn part_one(instructions: &Vec<Instruction>) {
 }
 
 fn parse_input(filename: &str) -> Vec<Instruction> {
-    let instructions = read_file(filename)
+    
+    read_file(filename)
         .iter()
         .map(|entry| {
             let (direction, amount_str) = entry.split_at(1);
@@ -150,8 +151,7 @@ fn parse_input(filename: &str) -> Vec<Instruction> {
                 _ => panic!("Invalid instruction? {:?}", entry),
             }
         })
-        .collect();
-    instructions
+        .collect()
 }
 
 fn main() {
