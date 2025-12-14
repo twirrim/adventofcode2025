@@ -161,7 +161,6 @@ fn main() {
     debug_println!("Instructions: {:?}", instructions);
     part_one(&instructions);
     part_two(&instructions);
-    part_two_brute(&instructions);
     println!("Overall time taken: {:?}", start.elapsed());
 }
 
