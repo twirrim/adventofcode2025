@@ -1,4 +1,4 @@
-use advent_of_code_2025::{debug_println, read_file};
+use advent_of_code_2025::{Timer, debug_println, read_file};
 
 #[derive(Debug, Clone, Copy)]
 enum Direction {
@@ -61,7 +61,7 @@ impl Lock {
                         amount
                     );
                     if self.location != 0 {
-                        passed_through_zero = true
+                        passed_through_zero = true;
                     }
                     self.location += 100;
                 }
@@ -78,7 +78,7 @@ impl Lock {
                         self.location
                     );
                     if self.location != 0 {
-                        passed_through_zero = true
+                        passed_through_zero = true;
                     }
                     self.location -= 100;
                 }
@@ -109,31 +109,30 @@ struct Instruction {
 }
 
 fn part_two(instructions: &Vec<Instruction>) {
-    let start = std::time::Instant::now();
+    let timer = Timer::start("Part Two".to_owned());
     debug_println!("Creating lock");
     let mut lock = Lock::default();
     for instruction in instructions {
         lock.turn(instruction);
         debug_println!("#### Current Status: {:?}", lock);
     }
-    println!("Result {}", lock.zero_passed);
-    println!("Part Two took: {:?}", start.elapsed());
+    println!("Part Two Result {}", lock.zero_passed);
+    timer.elapsed();
 }
 
 fn part_one(instructions: &Vec<Instruction>) {
-    let start = std::time::Instant::now();
+    let timer = Timer::start("Part One".to_owned());
     debug_println!("Creating lock");
     let mut lock = Lock::default();
     for instruction in instructions {
         lock.turn(instruction);
         debug_println!("#### Current Status: {:?}", lock);
     }
-    println!("Result {}", lock.zero_count);
-    println!("Part One took: {:?}", start.elapsed());
+    println!("Part One Result {}", lock.zero_count);
+    timer.elapsed();
 }
 
 fn parse_input(filename: &str) -> Vec<Instruction> {
-    
     read_file(filename)
         .iter()
         .map(|entry| {
@@ -156,12 +155,14 @@ fn parse_input(filename: &str) -> Vec<Instruction> {
 
 fn main() {
     println!("Starting");
-    let start = std::time::Instant::now();
+    let timer = Timer::start("Day 1".to_owned());
+    let read_timer = Timer::start("Parsing input".to_owned());
     let instructions: Vec<Instruction> = parse_input("./data/day1.txt");
+    read_timer.elapsed();
     debug_println!("Instructions: {:?}", instructions);
     part_one(&instructions);
     part_two(&instructions);
-    println!("Overall time taken: {:?}", start.elapsed());
+    timer.elapsed();
 }
 
 #[cfg(test)]
