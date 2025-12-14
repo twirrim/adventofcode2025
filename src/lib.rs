@@ -4,6 +4,8 @@ use std::time::Instant;
 // Common utilities for use across multiple days
 
 // from https://www.reddit.com/r/rust/comments/skmpnr/output_text_to_console_in_debug_mode_only/hvluai2/
+// This macro will insert a println at compile time, if the code is being compiled in debug mode
+// This over-optimisation avoids the overhead of thrown away log::debug entries etc.
 #[macro_export]
 macro_rules! debug_println {
     ($($arg:tt)*) => (if ::std::cfg!(debug_assertions) { ::std::println!($($arg)*); })
