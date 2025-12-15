@@ -26,7 +26,7 @@ fn parse_input(filename: &str) -> Vec<RangeInclusive<usize>> {
 fn remove_first_and_last_letters(id: &str) -> String {
     let mut id = id.to_string();
     id.pop(); // remove last
-    if id.len() > 0 {
+    if !id.is_empty() {
         id.remove(0); // remove first
     }
     id
@@ -56,12 +56,11 @@ fn invalid_id_part_one(id: usize) -> bool {
     let text = format!("{id}");
     let (first, second) = text.split_at(text.len() / 2);
     debug_println!("First: {first}. Second: {second}");
-    if !second.starts_with("0") {
-        if first == second {
+    if !second.starts_with("0")
+        && first == second {
             debug_println!("Invalid ID found: {first} == {second}");
             return true;
         }
-    }
     false
 }
 
@@ -70,7 +69,7 @@ fn part_one(data: &Vec<RangeInclusive<usize>>) -> usize {
     let mut tally = 0;
     for range in data {
         debug_println!("Evaluating range\t{:?}", range);
-        for id in range.clone().into_iter() {
+        for id in range.clone() {
             if invalid_id_part_one(id) {
                 debug_println!("Invalid ID found: {id}");
                 tally += id;
@@ -86,7 +85,7 @@ fn part_two(data: &Vec<RangeInclusive<usize>>) -> usize {
     let mut tally = 0;
     for range in data {
         debug_println!("Evaluating range\t{:?}", range);
-        for id in range.clone().into_iter() {
+        for id in range.clone() {
             if invalid_id_part_two(id) {
                 debug_println!("Invalid ID found: {id}");
                 tally += id;
