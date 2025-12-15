@@ -21,22 +21,29 @@ fn parse_input(filename: &str) -> Vec<RangeInclusive<usize>> {
         .collect()
 }
 
+fn invalid_id_part_one(id: usize) -> bool {
+    debug_println!("Evaluating {id}");
+    let text = format!("{id}");
+    let (first, second) = text.split_at(text.len() / 2);
+    debug_println!("First: {first}. Second: {second}");
+    if !second.starts_with("0") {
+        if first == second {
+            debug_println!("Invalid ID found: {first} == {second}");
+            return true;
+        }
+    }
+    false
+}
+
 fn part_one(data: &Vec<RangeInclusive<usize>>) -> usize {
     let timer = Timer::start("Part One".to_owned());
     let mut tally = 0;
     for range in data {
         debug_println!("Evaluating range\t{:?}", range);
         for id in range.clone().into_iter() {
-            debug_println!("Evaluating {id}");
-            let text = format!("{id}");
-            let (first, second) = text.split_at(text.len() / 2);
-            debug_println!("First: {first}. Second: {second}");
-            // Only evaluate where the second half doesn't start with a 0
-            if !second.starts_with("0") {
-                if first == second {
-                    debug_println!("Invalid ID found: {first} == {second}");
-                    tally += id;
-                }
+            if invalid_id_part_one(id) {
+                debug_println!("Invalid ID found: {id}");
+                tally += id;
             }
         }
     }
@@ -72,5 +79,19 @@ mod tests {
     fn test_sample_data() {
         let data = parse_input("./data/day2_test");
         assert_eq!(part_one(&data), 1227775554);
+    }
+
+    #[rstest]
+    #[case(11, true)]
+    #[case(12, false)]
+    #[case(13, false)]
+    #[case(14, false)]
+    #[case(21, false)]
+    #[case(22, true)]
+    #[case(98, false)]
+    #[case(99, true)]
+    #[case(100, false)]
+    fn test_part_one_id_evaluation(#[case] id: usize, #[case] want: bool) {
+        assert_eq!(invalid_id_part_one(id), want);
     }
 }
