@@ -41,9 +41,11 @@ impl Timer {
     where
         T: Into<Cow<'static, str>>,
     {
+        let name: Cow<'static, str> = name.into();
+        debug_println!("Creating timer called \"{}\"", name);
         Timer {
             start_time: Instant::now(),
-            name: name.into(),
+            name,
         }
     }
 
