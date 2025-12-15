@@ -109,7 +109,7 @@ struct Instruction {
 }
 
 fn part_two(instructions: &Vec<Instruction>) {
-    let timer = Timer::start("Part Two".to_owned());
+    let _timer = Timer::start("Part Two");
     debug_println!("Creating lock");
     let mut lock = Lock::default();
     for instruction in instructions {
@@ -117,11 +117,10 @@ fn part_two(instructions: &Vec<Instruction>) {
         debug_println!("#### Current Status: {:?}", lock);
     }
     println!("Part Two Result {}", lock.zero_passed);
-    timer.elapsed();
 }
 
 fn part_one(instructions: &Vec<Instruction>) {
-    let timer = Timer::start("Part One".to_owned());
+    let _timer = Timer::start("Part One");
     debug_println!("Creating lock");
     let mut lock = Lock::default();
     for instruction in instructions {
@@ -129,10 +128,10 @@ fn part_one(instructions: &Vec<Instruction>) {
         debug_println!("#### Current Status: {:?}", lock);
     }
     println!("Part One Result {}", lock.zero_count);
-    timer.elapsed();
 }
 
 fn parse_input(filename: &str) -> Vec<Instruction> {
+    let _timer = Timer::start(format!("Parsing input {}", filename));
     read_file(filename)
         .iter()
         .map(|entry| {
@@ -155,14 +154,11 @@ fn parse_input(filename: &str) -> Vec<Instruction> {
 
 fn main() {
     println!("Starting");
-    let timer = Timer::start("Day 1".to_owned());
-    let read_timer = Timer::start("Parsing input".to_owned());
+    let _timer = Timer::start("Day 1");
     let instructions: Vec<Instruction> = parse_input("./data/day1.txt");
-    read_timer.elapsed();
     debug_println!("Instructions: {:?}", instructions);
     part_one(&instructions);
     part_two(&instructions);
-    timer.elapsed();
 }
 
 #[cfg(test)]

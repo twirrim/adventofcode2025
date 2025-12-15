@@ -1,5 +1,6 @@
+use std::borrow::Cow;
 use std::fs;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 // Common utilities for use across multiple days
 
@@ -26,19 +27,34 @@ pub fn read_file(source: &str) -> Vec<String> {
 
 pub struct Timer {
     start_time: Instant,
-    name: String,
+    name: Cow<'static, str>,
+}
+
+impl Drop for Timer {
+    fn drop(&mut self) {
+        self.elapsed();
+    }
 }
 
 impl Timer {
-    pub fn start(name: String) -> Self {
+    pub fn start<T>(name: T) -> Self
+    where
+        T: Into<Cow<'static, str>>,
+    {
         Timer {
             start_time: Instant::now(),
-            name,
+            name: name.into(),
         }
     }
-    pub fn elapsed(&self) {
-        println!("{} took {:?}", self.name, self.start_time.elapsed());
+
+    pub fn duration(&self) -> Duration {
+        self.start_time.elapsed()
     }
+
+    pub fn elapsed(&self) {
+        println!("[{}] took {:?}", self.name, self.duration());
+    }
+
     pub fn secs_so_far(&self) -> u64 {
         self.start_time.elapsed().as_secs()
     }
