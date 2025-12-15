@@ -42,7 +42,9 @@ fn invalid_id_part_two(id: usize) -> bool {
     // This is taking advantage of the "string doubling" technique I found searching for more optimal approaches than brute forcing it
     // Essentially, if a string S is made of repeating patterns, then the string will exist inside S+S that has first and last letters trimmed from it
     let doubled_id: String = format!("{id}{id}");
+    debug_println!("Doubled string: {}", doubled_id);
     let stripped = remove_first_and_last_letters(&doubled_id);
+    debug_println!("After stripping first and last: {stripped}");
     if stripped.contains(&format!("{id}")) {
         return true;
     }
@@ -134,5 +136,21 @@ mod tests {
     #[case(100, false)]
     fn test_part_one_id_evaluation(#[case] id: usize, #[case] want: bool) {
         assert_eq!(invalid_id_part_one(id), want);
+    }
+
+    #[rstest]
+    #[case(11, true)] // Still works with part one evaluation
+    #[case(12, false)]
+    #[case(121212, true)] // new behaviour
+    #[case(121312, false)] // new behaviour
+    fn test_part_two_id_evaluation(#[case] id: usize, #[case] want: bool) {
+        assert_eq!(invalid_id_part_two(id), want);
+    }
+
+    #[rstest]
+    fn test_remove_first_and_last_letters() {
+        assert_eq!(remove_first_and_last_letters("foo"), "o");
+        assert_eq!(remove_first_and_last_letters("foobar"), "ooba");
+        assert_eq!(remove_first_and_last_letters("123456"), "2345");
     }
 }
