@@ -1,6 +1,6 @@
 use advent_of_code_2025::{Timer, debug_println, read_file};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Direction {
     Left,
     Right,
@@ -102,7 +102,7 @@ impl Lock {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Instruction {
     direction: Direction,
     amount: usize,
@@ -130,25 +130,27 @@ fn part_one(instructions: &Vec<Instruction>) {
     println!("Part One Result {}", lock.zero_count);
 }
 
+fn convert_entry_to_instruction(entry: &str) -> Instruction {
+    let (direction, amount_str) = entry.split_at(1);
+    let amount: usize = amount_str.parse().unwrap();
+    match direction {
+        "L" => Instruction {
+            direction: Direction::Left,
+            amount,
+        },
+        "R" => Instruction {
+            direction: Direction::Right,
+            amount,
+        },
+        _ => panic!("Invalid instruction? {:?}", entry),
+    }
+}
+
 fn parse_input(filename: &str) -> Vec<Instruction> {
     let _timer = Timer::start(format!("Parsing input {}", filename));
     read_file(filename)
         .iter()
-        .map(|entry| {
-            let (direction, amount_str) = entry.split_at(1);
-            let amount: usize = amount_str.parse().unwrap();
-            match direction {
-                "L" => Instruction {
-                    direction: Direction::Left,
-                    amount,
-                },
-                "R" => Instruction {
-                    direction: Direction::Right,
-                    amount,
-                },
-                _ => panic!("Invalid instruction? {:?}", entry),
-            }
-        })
+        .map(|entry| convert_entry_to_instruction(entry))
         .collect()
 }
 
@@ -276,5 +278,22 @@ mod tests {
             amount: 1,
         });
         assert_eq!(lock.zero_passed, 0);
+    }
+
+    #[rstest]
+    #[case("L10", Instruction {direction: Direction::Left, amount: 10})]
+    #[case("R10", Instruction {direction: Direction::Right, amount: 10})]
+    fn test_convert_entry_to_instruction(#[case] input: &str, #[case] want: Instruction) {
+        assert_eq!(convert_entry_to_instruction(input), want);
+    }
+
+    #[rstest]
+    #[case("l10")]
+    #[case("nonsense")]
+    #[case("10l")]
+    #[case("P10")]
+    #[should_panic]
+    fn test_convert_entry_to_instruction_panics(#[case] input: &str) {
+        convert_entry_to_instruction(input);
     }
 }
