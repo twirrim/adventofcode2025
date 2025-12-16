@@ -5,6 +5,3 @@ edition = "2024"
 
 [dev-dependencies]
 rstest = "0.26.1"
-
-[dependencies]
-indicatif = "0.18.3"
