@@ -31,30 +31,54 @@ fn get_adjacent_indexes(data: &[Vec<char>], x: usize, y: usize) -> Vec<(usize, u
     adjacent
 }
 
-fn part_one(data: &[Vec<char>]) -> usize {
-    let _t = Timer::start("Part One");
-    debug_println!("Evaluating {data:?}");
-    // iterate over each entry
+fn evaluate_map(map: &Vec<Vec<char>>) -> (usize, Vec<Vec<char>>) {
+    let mut new_map = map.clone();
     let mut can_be_moved = 0;
-    for x in 0..data.len() {
-        for y in 0..data[x].len() {
+    for x in 0..map.len() {
+        for y in 0..map[x].len() {
             debug_println!("{x},{y}");
-            if data[x][y] == '@' {
+            if map[x][y] == '@' {
                 // find indexes of the adjacent locations
-                let adjacent = get_adjacent_indexes(data, x, y);
+                let adjacent = get_adjacent_indexes(map, x, y);
                 let mut count = 0;
                 for (x_idx, y_idx) in adjacent {
-                    if data[x_idx][y_idx] == '@' {
+                    if map[x_idx][y_idx] == '@' {
                         count += 1;
                     }
                 }
                 if count < 4 {
-                    debug_println!("{x},{y} is safe to move");
+                    debug_println!(
+                        "{x},{y} is safe to move. Updating map and incrementing counter"
+                    );
+                    new_map[x][y] = '.';
                     can_be_moved += 1;
                 }
             }
         }
     }
+    (can_be_moved, new_map)
+}
+
+fn part_two(data: &Vec<Vec<char>>) -> usize {
+    let _t = Timer::start("Part Two");
+    let mut final_count = 0;
+    let mut map = data.clone();
+    loop {
+        let (can_be_moved, new_map) = evaluate_map(&map);
+        map = new_map;
+        if can_be_moved == 0 {
+            break;
+        } else {
+            final_count += can_be_moved;
+        }
+    }
+    println!("Part Two result: {final_count}");
+    final_count
+}
+
+fn part_one(data: &Vec<Vec<char>>) -> usize {
+    let _t = Timer::start("Part One");
+    let (can_be_moved, _new_map) = evaluate_map(data);
     println!("Part One result: {can_be_moved}");
     can_be_moved
 }
@@ -71,6 +95,7 @@ fn main() {
     let _t = Timer::start("Day 4");
     let data = parse_input("./data/day4.txt");
     part_one(&data);
+    part_two(&data);
 }
 
 #[cfg(test)]
@@ -81,5 +106,10 @@ mod test {
     #[rstest]
     fn test_part_one_test_input() {
         assert_eq!(part_one(&parse_input("./data/day4_test")), 13);
+    }
+
+    #[rstest]
+    fn test_part_two_test_input() {
+        assert_eq!(part_two(&parse_input("./data/day4_test")), 43);
     }
 }
