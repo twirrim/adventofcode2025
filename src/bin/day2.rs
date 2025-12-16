@@ -56,11 +56,10 @@ fn invalid_id_part_one(id: usize) -> bool {
     let text = format!("{id}");
     let (first, second) = text.split_at(text.len() / 2);
     debug_println!("First: {first}. Second: {second}");
-    if !second.starts_with("0")
-        && first == second {
-            debug_println!("Invalid ID found: {first} == {second}");
-            return true;
-        }
+    if !second.starts_with("0") && first == second {
+        debug_println!("Invalid ID found: {first} == {second}");
+        return true;
+    }
     false
 }
 
