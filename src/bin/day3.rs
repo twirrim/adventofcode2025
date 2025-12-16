@@ -1,7 +1,5 @@
 use std::char;
 
-use indicatif::{ProgressIterator, ProgressStyle};
-
 use advent_of_code_2025::*;
 
 fn parse_input(filename: &str) -> Vec<String> {
@@ -9,141 +7,57 @@ fn parse_input(filename: &str) -> Vec<String> {
     read_file(filename)
 }
 
-fn part_two_evaluate_brute_force(bank: &str) -> usize {
-    let mut max = usize::MIN;
-    let letters: Vec<char> = bank.chars().collect();
-    let styles: Vec<ProgressStyle> = (0..12)
-        .map(|f| {
-            let base_string =
-                "[{elapsed_precise}/{eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7}";
-            let template_string = format!("{base_string} {f}");
-            ProgressStyle::with_template(&template_string).unwrap()
-        })
-        .collect();
-    for (first_idx, first) in letters
-        .iter()
-        .progress_with_style(styles[0].clone())
-        .enumerate()
-    {
-        for (second_idx, second) in letters
+fn evaluate_bank(bank: &str, target_length: usize) -> usize {
+    let letters_char: Vec<char> = bank.chars().collect();
+    debug_println!("Bank: {letters_char:?}");
+    let letters: Vec<u32> = bank.chars().map(|f| f.to_digit(10).unwrap()).collect();
+    let mut chosen_indexes: Vec<usize> = vec![];
+    let mut start_index: usize = 0;
+    let mut answer = String::new();
+    loop {
+        if chosen_indexes.len() >= target_length {
+            break;
+        }
+        // Define the range to evaluate
+        if !chosen_indexes.is_empty() {
+            // unwrap is safe here because previously we handled the empty case.
+            start_index = chosen_indexes.last().copied().unwrap() + 1;
+        }
+        let end_index = letters.len() - target_length + chosen_indexes.len();
+        let range = start_index..=end_index;
+        debug_println!("Evaluating range {:?}", range);
+        // evaluate the range
+        let max_index = &letters[range]
             .iter()
-            .skip(first_idx + 1)
-            .progress_with_style(styles[1].clone())
             .enumerate()
-        {
-            for (third_idx, third) in letters
-                .iter()
-                .skip(second_idx + 1)
-                .progress_with_style(styles[2].clone())
-                .enumerate()
-            {
-                for (fourth_idx, fourth) in letters
-                    .iter()
-                    .skip(third_idx + 1)
-                    .progress_with_style(styles[3].clone())
-                    .enumerate()
-                {
-                    for (fifth_idx, fifth) in letters
-                        .iter()
-                        .skip(fourth_idx + 1)
-                        .progress_with_style(styles[4].clone())
-                        .enumerate()
-                    {
-                        for (sixth_idx, sixth) in letters
-                            .iter()
-                            .skip(fifth_idx + 1)
-                            .progress_with_style(styles[5].clone())
-                            .enumerate()
-                        {
-                            for (seventh_idx, seventh) in letters
-                                .iter()
-                                .skip(sixth_idx + 1)
-                                .progress_with_style(styles[6].clone())
-                                .enumerate()
-                            {
-                                for (eigth_idx, eigth) in letters
-                                    .iter()
-                                    .skip(seventh_idx + 1)
-                                    .progress_with_style(styles[7].clone())
-                                    .enumerate()
-                                {
-                                    for (ninth_idx, ninth) in
-                                        letters.iter().skip(eigth_idx + 1).enumerate()
-                                    {
-                                        for (tenth_idx, tenth) in
-                                            letters.iter().skip(ninth_idx + 1).enumerate()
-                                        {
-                                            for (eleventh_idx, eleventh) in
-                                                letters.iter().skip(tenth_idx + 1).enumerate()
-                                            {
-                                                for twelth in letters.iter().skip(eleventh_idx + 1)
-                                                {
-                                                    let joltage: usize = format!(
-                                                        "{}{}{}{}{}{}{}{}{}{}{}{}",
-                                                        first,
-                                                        second,
-                                                        third,
-                                                        fourth,
-                                                        fifth,
-                                                        sixth,
-                                                        seventh,
-                                                        eigth,
-                                                        ninth,
-                                                        tenth,
-                                                        eleventh,
-                                                        twelth
-                                                    )
-                                                    .parse()
-                                                    .unwrap();
-                                                    if joltage > max {
-                                                        max = joltage;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+            // This is annoying.  max_by_key returns last matching index, min returns first.
+            // Stdlib's Reverse enables biggest to seem like smallest.
+            .min_by_key(|&(_idx, &val)| std::cmp::Reverse(val)) // find the "largest" number
+            .map(|(idx, _val)| idx + start_index) // drop the value and return the index + offset.
+            .unwrap(); // Shouldn't be possible to panic.
+        debug_println!(
+            "Chosen index: {:?}, which has value {:?}",
+            *max_index,
+            letters_char[*max_index]
+        );
+        chosen_indexes.push(*max_index);
+        answer += &letters_char[*max_index].to_string();
+        debug_println!("Answer so far: {answer}");
     }
-    max
-}
-
-fn part_one_evaluate_bank(bank: &str) -> usize {
-    let mut max = usize::MIN;
-    let letters: Vec<char> = bank.chars().collect();
-    for (idx, first) in letters.iter().enumerate() {
-        for second in letters.iter().skip(idx + 1) {
-            let joltage: usize = format!("{}{}", first, second).parse().unwrap();
-            debug_println!("Joltage: {joltage}");
-            if joltage > max {
-                debug_println!(
-                    "current joltage {} > current max {}, updating max",
-                    joltage,
-                    max
-                );
-                max = joltage;
-            }
-        }
-    }
-    debug_println!("Returning max joltage: {max}");
-    max
+    // Convert the answer back to a number
+    answer.parse().unwrap()
 }
 
 fn part_one(banks: &[String]) -> usize {
     let _t = Timer::start("Part One");
-    let answer: usize = banks.iter().map(|f| part_one_evaluate_bank(f)).sum();
+    let answer: usize = banks.iter().map(|f| evaluate_bank(f, 2)).sum();
     println!("Part One: {answer}");
     answer
 }
 
 fn part_two(banks: &[String]) -> usize {
     let _t = Timer::start("Part Two");
-    let answer: usize = banks.iter().map(|f| part_two_evaluate_brute_force(f)).sum();
+    let answer: usize = banks.iter().map(|f| evaluate_bank(f, 12)).sum();
     println!("Part Two: {answer}");
     answer
 }
@@ -161,8 +75,21 @@ mod tests {
     use rstest::rstest;
 
     #[rstest]
-    fn test_known_bank() {
-        assert_eq!(part_one_evaluate_bank(&String::from("234234234234278")), 78);
+    #[case("987654321111111", 98)]
+    #[case("811111111111119", 89)]
+    #[case("234234234234278", 78)]
+    #[case("818181911112111", 92)]
+    fn test_known_bank_part_one(#[case] input: &str, #[case] want: usize) {
+        assert_eq!(evaluate_bank(input, 2), want);
+    }
+
+    #[rstest]
+    #[case("987654321111111", 987654321111)]
+    #[case("811111111111119", 811111111119)]
+    #[case("234234234234278", 434234234278)]
+    #[case("818181911112111", 888911112111)]
+    fn test_known_bank_part_two(#[case] input: &str, #[case] want: usize) {
+        assert_eq!(evaluate_bank(input, 12), want);
     }
 
     #[rstest]
