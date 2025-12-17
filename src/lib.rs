@@ -25,6 +25,40 @@ pub fn read_file(source: &str) -> Vec<String> {
         .collect()
 }
 
+/// Inspired by https://stackoverflow.com/questions/26998485/is-it-possible-to-print-a-number-formatted-with-thousand-separator-in-rust#comment136853740_67834588
+/// then made generic, and avoiding most of the allocations
+/// This method will print out numbers with thousands separators
+pub fn print_with_thousands_separator<T: std::fmt::Display>(val: T) -> String {
+    let s = val.to_string();
+    // Make a note if the number is negative for later use, stripping the prefix if it is.
+    let (is_neg, num_str) = if let Some(stripped) = s.strip_prefix('-') {
+        (true, stripped)
+    } else {
+        (false, s.as_str())
+    };
+
+    let mut result = String::with_capacity(s.len() + (s.len() / 3));
+
+    // Put the negative symbol back in
+    if is_neg {
+        result.push('-');
+    }
+
+    let offset = num_str.len() % 3;
+    if offset > 0 {
+        result.push_str(&num_str[..offset]);
+    }
+
+    for (i, c) in num_str[offset..].chars().enumerate() {
+        if i % 3 == 0 && (offset > 0 || i > 0) {
+            result.push(',');
+        }
+        result.push(c);
+    }
+
+    result
+}
+
 pub struct Timer {
     start_time: Instant,
     name: Cow<'static, str>,
@@ -59,5 +93,21 @@ impl Timer {
 
     pub fn secs_so_far(&self) -> u64 {
         self.start_time.elapsed().as_secs()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rstest::rstest;
+
+    #[rstest]
+    #[case(-1234567 as isize, "-1,234,567")]
+    #[case(9876543210 as u64, "9,876,543,210")]
+    #[case(1000 as i32, "1,000")]
+    #[case(255 as u8, "255")]
+    #[case(-128 as i16, "-128")] // Make sure we don't get "-,128"
+    fn test_thousands_separator<T: std::fmt::Display>(#[case] val: T, #[case] want: String) {
+        assert_eq!(print_with_thousands_separator(val), want);
     }
 }
