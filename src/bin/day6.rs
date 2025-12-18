@@ -32,9 +32,9 @@ fn parse_operators(line: &str) -> Vec<Operator> {
         .collect()
 }
 
-fn parse_input_part_two(source: &Vec<String>) -> Vec<Calculation> {
+fn parse_input_part_two(source: &[String]) -> Vec<Calculation> {
     let _t = Timer::start("Parsing file for part two");
-    let mut source = source.clone();
+    let mut source = source.to_owned();
     // Extract the operators in the last line, reversed for later logic
     let operators: Vec<Operator> = parse_operators(&source.pop().expect("File Empty?"))
         .into_iter()
@@ -43,7 +43,11 @@ fn parse_input_part_two(source: &Vec<String>) -> Vec<Calculation> {
 
     // Create a flat byte grid for speed
     let row_count = source.len();
-    let max_len = source.iter().map(|f| f.len()).max().unwrap_or(0);
+    let max_len = source
+        .iter()
+        .map(std::string::String::len)
+        .max()
+        .unwrap_or(0);
     let mut grid = vec![b' '; row_count * max_len];
 
     for (r, line) in source.iter().enumerate() {
@@ -89,10 +93,10 @@ fn parse_input_part_two(source: &Vec<String>) -> Vec<Calculation> {
                 }
             }
 
-            if !num_buf.is_empty() {
-                if let Ok(num) = num_buf.parse::<isize>() {
-                    number_set.push(num);
-                }
+            if !num_buf.is_empty()
+                && let Ok(num) = num_buf.parse::<isize>()
+            {
+                number_set.push(num);
             }
         }
 
@@ -116,9 +120,9 @@ fn parse_input_part_two(source: &Vec<String>) -> Vec<Calculation> {
         .collect()
 }
 
-fn parse_input_part_one(source: &Vec<String>) -> Vec<Calculation> {
+fn parse_input_part_one(source: &[String]) -> Vec<Calculation> {
     let _t = Timer::start("Parsing source for part one");
-    let mut source = source.clone();
+    let mut source = source.to_owned();
     let operators = parse_operators(&source.pop().expect("File empty"));
 
     let mut values_grid: Vec<Vec<isize>> = vec![vec![]; operators.len()];
