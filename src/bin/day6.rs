@@ -53,8 +53,8 @@ fn parse_input_part_two(filename: &str) -> Vec<Calculation> {
     let mut dividers: Vec<usize> = vec![];
     for column in (0..max_len).rev() {
         let mut divider = true;
-        for row in 0..row_count {
-            if grid[row][column] != ' ' {
+        for row in grid.iter().take(row_count) {
+            if row[column] != ' ' {
                 divider = false;
                 break;
             }
@@ -142,8 +142,7 @@ fn calculate(calculation: &Calculation) -> isize {
     answer
 }
 
-fn part_one() -> isize {
-    let calculations = parse_input_part_one("./data/day6.txt");
+fn part_one(calculations: Vec<Calculation>) -> isize {
     let _t = Timer::start("Part One");
     let mut sum = 0;
     for calculation in calculations {
@@ -154,8 +153,7 @@ fn part_one() -> isize {
     sum
 }
 
-fn part_two() -> isize {
-    let calculations = parse_input_part_two("./data/day6.txt");
+fn part_two(calculations: Vec<Calculation>) -> isize {
     let _t = Timer::start("Part Two");
     let mut sum = 0;
     for calculation in calculations {
@@ -168,8 +166,10 @@ fn part_two() -> isize {
 
 fn main() {
     let _t = Timer::start("Day 6");
-    part_one();
-    part_two();
+    let calculations = parse_input_part_one("./data/day6.txt");
+    part_one(calculations);
+    let calculations = parse_input_part_two("./data/day6.txt");
+    part_two(calculations);
 }
 
 #[cfg(test)]
@@ -202,6 +202,6 @@ mod tests {
     #[rstest]
     fn test_part_two_with_example_data() {
         let calculations = parse_input_part_two("./data/day6_test");
-        assert_eq!(part_one(calculations), 3263827)
+        assert_eq!(part_two(calculations), 3263827)
     }
 }
