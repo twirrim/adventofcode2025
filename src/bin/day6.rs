@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use advent_of_code_2025::*;
 
 #[derive(Debug, Clone, Copy)]
@@ -13,7 +11,7 @@ enum Operator {
 #[derive(Debug, Clone)]
 struct Calculation {
     operator: Operator,
-    values: VecDeque<isize>,
+    values: Vec<isize>,
 }
 
 #[inline]
@@ -34,123 +32,122 @@ fn parse_operators(line: &str) -> Vec<Operator> {
         .collect()
 }
 
-fn parse_input_part_two(filename: &str) -> Vec<Calculation> {
-    let _t = Timer::start(format!("Parsing file for part two: {filename}"));
-    let mut output = vec![];
-    let mut source = read_file(filename);
-    // Collect the operators (reverse it!)
-    let operators: Vec<Operator> = parse_operators(&source.pop().unwrap())
+fn parse_input_part_two(source: &Vec<String>) -> Vec<Calculation> {
+    let _t = Timer::start("Parsing file for part two");
+    let mut source = source.clone();
+    // Extract the operators in the last line, reversed for later logic
+    let operators: Vec<Operator> = parse_operators(&source.pop().expect("File Empty?"))
         .into_iter()
         .rev()
         .collect();
-    // Use this to pre-populate the output
-    for operator in operators {
-        output.push(Calculation {
-            operator,
-            values: VecDeque::new(),
-        });
+
+    // Create a flat byte grid for speed
+    let row_count = source.len();
+    let max_len = source.iter().map(|f| f.len()).max().unwrap_or(0);
+    let mut grid = vec![b' '; row_count * max_len];
+
+    for (r, line) in source.iter().enumerate() {
+        let bytes = line.as_bytes();
+        let start = r * max_len;
+        // Copy the line bytes into our flat grid
+        grid[start..start + bytes.len()].copy_from_slice(bytes);
     }
-    // Now we need to treat the rest of the lines as if they're a 2D grid.
-    // Just in case of copy/paste error, make sure we know the longest line
-    let max_len = source
-        .iter()
-        .map(std::string::String::len)
-        .max()
-        .unwrap_or(0);
 
-    // Make the grid, padding the lines as necessary
-    let grid: Vec<Vec<char>> = source
-        .iter()
-        .map(|f| format!("{f:max_len$}").chars().collect())
-        .collect();
-
-    debug_println!("{:?}", grid);
-    let row_count = grid.len();
-    // Working right to left, we can figure out the dividers by looking for columns that are only space.
-    let mut dividers: Vec<usize> = vec![];
-    for column in (0..max_len).rev() {
-        let mut divider = true;
-        for row in grid.iter().take(row_count) {
-            if row[column] != ' ' {
-                divider = false;
+    // Find dividers (columns that are only spaces)
+    let mut dividers: Vec<usize> = vec![0];
+    for col in 0..max_len {
+        let mut is_divider = true;
+        for row in 0..row_count {
+            if grid[row * max_len + col] != b' ' {
+                is_divider = false;
                 break;
             }
         }
-        if divider {
-            dividers.push(column);
+        if is_divider {
+            dividers.push(col);
         }
     }
-    // Add the very start
-    dividers.push(0);
-    debug_println!("dividers: {:?}", &dividers);
-    // Dividers are highest to low.  Start at the far right
-    let mut start = max_len;
-    let mut collected_numbers = vec![];
-    for divider in dividers {
-        debug_println!("Start: {start}");
-        let mut number_set = VecDeque::new();
-        for column in (divider..start).rev() {
-            let mut number = String::new();
-            for row in &grid {
-                number = format!("{number}{}", row[column]);
+    dividers.push(max_len);
+
+    // Extract numbers
+    let mut num_buf = String::with_capacity(row_count);
+    let mut all_number_sets = Vec::with_capacity(operators.len());
+
+    // Use windows to get the ranges between dividers
+    dividers.sort_unstable();
+    for range in dividers.windows(2).rev() {
+        let left = range[0];
+        let right = range[1];
+        let mut number_set = Vec::new();
+
+        for col in (left..right).rev() {
+            num_buf.clear();
+            for row in 0..row_count {
+                let byte = grid[row * max_len + col];
+                if byte != b' ' {
+                    num_buf.push(byte as char);
+                }
             }
-            // Strip any whitespace
-            number.retain(|x| !x.is_whitespace());
-            if !number.is_empty() {
-                // strip the whitespace
-                debug_println!("Adding {number}");
-                number_set.push_back(number.parse::<isize>().unwrap());
+
+            if !num_buf.is_empty() {
+                if let Ok(num) = num_buf.parse::<isize>() {
+                    number_set.push(num);
+                }
             }
         }
-        collected_numbers.push(number_set);
-        start = divider;
+
+        if !number_set.is_empty() {
+            all_number_sets.push(number_set);
+        }
     }
-    debug_println!("Collected numbers: {:?}", collected_numbers);
-    for (index, numbers) in collected_numbers.into_iter().enumerate() {
-        output[index].values = numbers;
-    }
-    output
+
+    operators
+        .into_iter()
+        .enumerate()
+        .map(|(i, operator)| {
+            // Use remove if exists, otherwise empty
+            let values = if i < all_number_sets.len() {
+                std::mem::take(&mut all_number_sets[i])
+            } else {
+                Vec::new()
+            };
+            Calculation { operator, values }
+        })
+        .collect()
 }
 
-fn parse_input_part_one(filename: &str) -> Vec<Calculation> {
-    let _t = Timer::start(format!("Parsing file for part one: {filename}"));
-    let mut output = vec![];
-    let mut source = read_file(filename);
-    // pop the last line
-    let operators: Vec<Operator> = parse_operators(&source.pop().unwrap());
-    // Use this to pre-populate the output
-    for operator in operators {
-        output.push(Calculation {
-            operator,
-            values: VecDeque::new(),
-        });
-    }
-    // Now read through the rest of the lines, and put the contents into the appropriate Vecs.
+fn parse_input_part_one(source: &Vec<String>) -> Vec<Calculation> {
+    let _t = Timer::start("Parsing source for part one");
+    let mut source = source.clone();
+    let operators = parse_operators(&source.pop().expect("File empty"));
+
+    let mut values_grid: Vec<Vec<isize>> = vec![vec![]; operators.len()];
+
     for line in source {
-        let values = split_line(&line);
-        for (idx, value) in values.iter().enumerate() {
-            output[idx].values.push_back(value.parse().unwrap());
+        for (idx, val) in split_line(&line).into_iter().enumerate() {
+            if idx < values_grid.len() {
+                values_grid[idx].push(val.parse().unwrap());
+            }
         }
-        debug_println!("{:?}", values);
     }
-    debug_println!("{:?}", output);
-    output
+
+    operators
+        .into_iter()
+        .zip(values_grid)
+        .map(|(operator, values)| Calculation { operator, values })
+        .collect()
 }
 
-fn calculate(calculation: &Calculation) -> isize {
-    debug_println!("Calculating: {:?}", calculation);
-    let mut calc = calculation.clone();
-    let mut answer = calc.values.pop_front().unwrap(); // should never fail?  Or just return 0 maybe?
-    for value in calc.values {
-        match calc.operator {
-            Operator::Add => answer += value,
-            Operator::Subtract => answer -= value,
-            Operator::Multiply => answer *= value,
-            Operator::Divide => answer /= value,
-        }
-    }
-    debug_println!("Answer: {answer}");
-    answer
+fn calculate(calc: &Calculation) -> isize {
+    let mut iter = calc.values.iter();
+    let first = *iter.next().unwrap_or(&0);
+
+    iter.fold(first, |accumulated, &next| match calc.operator {
+        Operator::Add => accumulated + next,
+        Operator::Subtract => accumulated - next,
+        Operator::Multiply => accumulated * next,
+        Operator::Divide => accumulated / next,
+    })
 }
 
 fn part_one(calculations: Vec<Calculation>) -> isize {
@@ -177,9 +174,12 @@ fn part_two(calculations: Vec<Calculation>) -> isize {
 
 fn main() {
     let _t = Timer::start("Day 6");
-    let calculations = parse_input_part_one("./data/day6.txt");
+    let file_timer = Timer::start("Reading file");
+    let source = read_file("./data/day6.txt");
+    std::mem::drop(file_timer);
+    let calculations = parse_input_part_one(&source);
     part_one(calculations);
-    let calculations = parse_input_part_two("./data/day6.txt");
+    let calculations = parse_input_part_two(&source);
     part_two(calculations);
 }
 
@@ -195,24 +195,26 @@ mod tests {
     }
 
     #[rstest]
-    #[case(Calculation{ operator: Operator::Add, values: VecDeque::from([1,2,3])}, 6)]
-    #[case(Calculation{ operator: Operator::Subtract, values: VecDeque::from([1,2,3])}, -4)]
-    #[case(Calculation{ operator: Operator::Multiply, values: VecDeque::from([1,2,3])}, 6)]
-    #[case(Calculation{ operator: Operator::Divide, values: VecDeque::from([1,2,3])}, 0)]
-    #[case(Calculation{ operator: Operator::Divide, values: VecDeque::from([9,2,3])}, 1)]
+    #[case(Calculation{ operator: Operator::Add, values: Vec::from([1,2,3])}, 6)]
+    #[case(Calculation{ operator: Operator::Subtract, values: Vec::from([1,2,3])}, -4)]
+    #[case(Calculation{ operator: Operator::Multiply, values: Vec::from([1,2,3])}, 6)]
+    #[case(Calculation{ operator: Operator::Divide, values: Vec::from([1,2,3])}, 0)]
+    #[case(Calculation{ operator: Operator::Divide, values: Vec::from([9,2,3])}, 1)]
     fn test_calculate(#[case] calculation: Calculation, #[case] want: isize) {
         assert_eq!(calculate(&calculation), want)
     }
 
     #[rstest]
     fn test_part_one_with_example_data() {
-        let calculations = parse_input_part_one("./data/day6_test");
+        let source = read_file("./data/day6_test");
+        let calculations = parse_input_part_one(&source);
         assert_eq!(part_one(calculations), 4277556)
     }
 
     #[rstest]
     fn test_part_two_with_example_data() {
-        let calculations = parse_input_part_two("./data/day6_test");
-        assert_eq!(part_two(calculations), 3263827)
+        let source = read_file("./data/day6_test");
+        let calculations = parse_input_part_two(&source);
+        assert_eq!(part_two(calculations), 3263827);
     }
 }
