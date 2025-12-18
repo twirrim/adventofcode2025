@@ -12,12 +12,91 @@ enum Operator {
 
 type Calculation = (Operator, VecDeque<isize>);
 
+#[inline]
 fn split_line(line: &str) -> Vec<&str> {
     line.split(' ').filter(|x| !x.is_empty()).collect()
 }
 
-fn parse_input(filename: &str) -> Vec<Calculation> {
-    let _t = Timer::start(format!("Parsing file: {filename}"));
+fn parse_input_part_two(filename: &str) -> Vec<Calculation> {
+    let _t = Timer::start(format!("Parsing file for part two: {filename}"));
+    let mut output = vec![];
+    let mut source = read_file(filename);
+    // pop the last line
+    let operators: Vec<Operator> = split_line(&source.pop().unwrap())
+        .into_iter()
+        .rev()
+        .map(|x| match x {
+            "+" => Operator::Add,
+            "-" => Operator::Subtract,
+            "*" => Operator::Multiply,
+            "/" => Operator::Divide,
+            _ => panic!("Unknown operator: {x}"),
+        })
+        .collect();
+    // Use this to pre-populate the output
+    for operator in operators {
+        output.push((operator, VecDeque::new()));
+    }
+    // Now we need to treat the rest of the lines as if they're a 2D grid.
+    // Just in case of copy/paste error, make sure we know the longest line
+    let max_len = source.iter().map(|f| f.len()).max().unwrap_or(0);
+
+    // Make the grid, padding the lines as necessary
+    let grid: Vec<Vec<char>> = source
+        .iter()
+        .map(|f| format!("{:width$}", f, width = max_len).chars().collect())
+        .collect();
+
+    debug_println!("{:?}", grid);
+    let row_count = grid.len();
+    // Working right to left, we can figure out the dividers by looking for columns that are only space.
+    let mut dividers: Vec<usize> = vec![];
+    for column in (0..max_len).rev() {
+        let mut divider = true;
+        for row in 0..row_count {
+            if grid[row][column] != ' ' {
+                divider = false;
+                break;
+            }
+        }
+        if divider {
+            dividers.push(column);
+        }
+    }
+    // Add the very start
+    dividers.push(0);
+    debug_println!("dividers: {:?}", &dividers);
+    // Dividers are highest to low.  Start at the far right
+    let mut start = max_len;
+    let mut collected_numbers = vec![];
+    for divider in dividers {
+        debug_println!("Start: {start}");
+        let mut number_set = VecDeque::new();
+        for column in (divider..start).rev() {
+            let mut number = String::new();
+            for row in &grid {
+                number = format!("{number}{}", row[column]);
+            }
+            // Strip any whitespace
+            number.retain(|x| !x.is_whitespace());
+            if !number.is_empty() {
+                // strip the whitespace
+                debug_println!("Adding {number}");
+                number_set.push_back(number.parse::<isize>().unwrap());
+            }
+        }
+        collected_numbers.push(number_set);
+        start = divider;
+    }
+    debug_println!("Collected numbers: {:?}", collected_numbers);
+    for (index, numbers) in collected_numbers.into_iter().enumerate() {
+        output[index].1 = numbers;
+    }
+    output
+}
+
+fn parse_input_part_one(filename: &str) -> Vec<Calculation> {
+    let _t = Timer::start(format!("Parsing file for part one: {filename}"));
     let mut output = vec![];
     let mut source = read_file(filename);
     // pop the last line
@@ -63,7 +142,8 @@ fn calculate(calculation: &Calculation) -> isize {
     answer
 }
 
-fn part_one(calculations: Vec<Calculation>) -> isize {
+fn part_one() -> isize {
+    let calculations = parse_input_part_one("./data/day6.txt");
     let _t = Timer::start("Part One");
     let mut sum = 0;
     for calculation in calculations {
@@ -74,10 +154,22 @@ fn part_one(calculations: Vec<Calculation>) -> isize {
     sum
 }
 
+fn part_two() -> isize {
+    let calculations = parse_input_part_two("./data/day6.txt");
+    let _t = Timer::start("Part Two");
+    let mut sum = 0;
+    for calculation in calculations {
+        sum += calculate(&calculation);
+        debug_println!("Current sum {sum}");
+    }
+    println!("Part Two Result: {sum}");
+    sum
+}
+
 fn main() {
     let _t = Timer::start("Day 6");
-    let data = parse_input("./data/day6.txt");
-    part_one(data);
+    part_one();
+    part_two();
 }
 
 #[cfg(test)]
@@ -103,7 +195,13 @@ mod tests {
 
     #[rstest]
     fn test_part_one_with_example_data() {
-        let calculations = parse_input("./data/day6_test");
+        let calculations = parse_input_part_one("./data/day6_test");
         assert_eq!(part_one(calculations), 4277556)
+    }
+
+    #[rstest]
+    fn test_part_two_with_example_data() {
+        let calculations = parse_input_part_two("./data/day6_test");
+        assert_eq!(part_one(calculations), 3263827)
     }
 }
