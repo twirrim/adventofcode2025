@@ -10,21 +10,20 @@ enum Operator {
     Divide,
 }
 
-type Calculation = (Operator, VecDeque<isize>);
+#[derive(Debug, Clone)]
+struct Calculation {
+    operator: Operator,
+    values: VecDeque<isize>,
+}
 
 #[inline]
 fn split_line(line: &str) -> Vec<&str> {
     line.split(' ').filter(|x| !x.is_empty()).collect()
 }
 
-fn parse_input_part_two(filename: &str) -> Vec<Calculation> {
-    let _t = Timer::start(format!("Parsing file for part two: {filename}"));
-    let mut output = vec![];
-    let mut source = read_file(filename);
-    // pop the last line
-    let operators: Vec<Operator> = split_line(&source.pop().unwrap())
+fn parse_operators(line: &str) -> Vec<Operator> {
+    split_line(line)
         .into_iter()
-        .rev()
         .map(|x| match x {
             "+" => Operator::Add,
             "-" => Operator::Subtract,
@@ -32,19 +31,37 @@ fn parse_input_part_two(filename: &str) -> Vec<Calculation> {
             "/" => Operator::Divide,
             _ => panic!("Unknown operator: {x}"),
         })
+        .collect()
+}
+
+fn parse_input_part_two(filename: &str) -> Vec<Calculation> {
+    let _t = Timer::start(format!("Parsing file for part two: {filename}"));
+    let mut output = vec![];
+    let mut source = read_file(filename);
+    // Collect the operators (reverse it!)
+    let operators: Vec<Operator> = parse_operators(&source.pop().unwrap())
+        .into_iter()
+        .rev()
         .collect();
     // Use this to pre-populate the output
     for operator in operators {
-        output.push((operator, VecDeque::new()));
+        output.push(Calculation {
+            operator,
+            values: VecDeque::new(),
+        });
     }
     // Now we need to treat the rest of the lines as if they're a 2D grid.
     // Just in case of copy/paste error, make sure we know the longest line
-    let max_len = source.iter().map(|f| f.len()).max().unwrap_or(0);
+    let max_len = source
+        .iter()
+        .map(std::string::String::len)
+        .max()
+        .unwrap_or(0);
 
     // Make the grid, padding the lines as necessary
     let grid: Vec<Vec<char>> = source
         .iter()
-        .map(|f| format!("{:width$}", f, width = max_len).chars().collect())
+        .map(|f| format!("{f:max_len$}").chars().collect())
         .collect();
 
     debug_println!("{:?}", grid);
@@ -90,7 +107,7 @@ fn parse_input_part_two(filename: &str) -> Vec<Calculation> {
     }
     debug_println!("Collected numbers: {:?}", collected_numbers);
     for (index, numbers) in collected_numbers.into_iter().enumerate() {
-        output[index].1 = numbers;
+        output[index].values = numbers;
     }
     output
 }
@@ -100,25 +117,19 @@ fn parse_input_part_one(filename: &str) -> Vec<Calculation> {
     let mut output = vec![];
     let mut source = read_file(filename);
     // pop the last line
-    let operators: Vec<Operator> = split_line(&source.pop().unwrap())
-        .into_iter()
-        .map(|x| match x {
-            "+" => Operator::Add,
-            "-" => Operator::Subtract,
-            "*" => Operator::Multiply,
-            "/" => Operator::Divide,
-            _ => panic!("Unknown operator: {x}"),
-        })
-        .collect();
+    let operators: Vec<Operator> = parse_operators(&source.pop().unwrap());
     // Use this to pre-populate the output
     for operator in operators {
-        output.push((operator, VecDeque::new()));
+        output.push(Calculation {
+            operator,
+            values: VecDeque::new(),
+        });
     }
     // Now read through the rest of the lines, and put the contents into the appropriate Vecs.
     for line in source {
         let values = split_line(&line);
         for (idx, value) in values.iter().enumerate() {
-            output[idx].1.push_back(value.parse().unwrap());
+            output[idx].values.push_back(value.parse().unwrap());
         }
         debug_println!("{:?}", values);
     }
@@ -129,13 +140,13 @@ fn parse_input_part_one(filename: &str) -> Vec<Calculation> {
 fn calculate(calculation: &Calculation) -> isize {
     debug_println!("Calculating: {:?}", calculation);
     let mut calc = calculation.clone();
-    let mut answer = calc.1.pop_front().unwrap(); // should never fail?  Or just return 0 maybe?
-    for value in &calc.1 {
-        match calc.0 {
-            Operator::Add => answer += *value,
-            Operator::Subtract => answer -= *value,
-            Operator::Multiply => answer *= *value,
-            Operator::Divide => answer /= *value,
+    let mut answer = calc.values.pop_front().unwrap(); // should never fail?  Or just return 0 maybe?
+    for value in calc.values {
+        match calc.operator {
+            Operator::Add => answer += value,
+            Operator::Subtract => answer -= value,
+            Operator::Multiply => answer *= value,
+            Operator::Divide => answer /= value,
         }
     }
     debug_println!("Answer: {answer}");
@@ -184,11 +195,11 @@ mod tests {
     }
 
     #[rstest]
-    #[case((Operator::Add, VecDeque::from([1,2,3])), 6)]
-    #[case((Operator::Subtract, VecDeque::from([1,2,3])), -4)]
-    #[case((Operator::Multiply, VecDeque::from([1,2,3])), 6)]
-    #[case((Operator::Divide, VecDeque::from([1,2,3])), 0)] // integer division!
-    #[case((Operator::Divide, VecDeque::from([9,2,3])), 1)]
+    #[case(Calculation{ operator: Operator::Add, values: VecDeque::from([1,2,3])}, 6)]
+    #[case(Calculation{ operator: Operator::Subtract, values: VecDeque::from([1,2,3])}, -4)]
+    #[case(Calculation{ operator: Operator::Multiply, values: VecDeque::from([1,2,3])}, 6)]
+    #[case(Calculation{ operator: Operator::Divide, values: VecDeque::from([1,2,3])}, 0)]
+    #[case(Calculation{ operator: Operator::Divide, values: VecDeque::from([9,2,3])}, 1)]
     fn test_calculate(#[case] calculation: Calculation, #[case] want: isize) {
         assert_eq!(calculate(&calculation), want)
     }
