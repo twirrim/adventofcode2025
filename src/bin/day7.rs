@@ -39,8 +39,7 @@ impl fmt::Display for Map {
 fn parse_input(filename: &str) -> Map {
     let _t = Timer::start(format!("Parsing file {filename}"));
     let source = read_file(filename);
-    Map {
-        0: source
+    Map(source
             .iter()
             .map(|f| {
                 f.chars()
@@ -53,8 +52,7 @@ fn parse_input(filename: &str) -> Map {
                     })
                     .collect()
             })
-            .collect(),
-    }
+            .collect())
 }
 
 fn part_one(map: &Map) -> usize {
