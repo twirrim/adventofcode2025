@@ -18,7 +18,7 @@ impl fmt::Display for Contents {
             Contents::Space => '.',
             Contents::Splitter => '^',
         };
-        write!(f, "{}", c)
+        write!(f, "{c}")
     }
 }
 
@@ -28,7 +28,7 @@ impl fmt::Display for Map {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for row in &self.0 {
             for col in row {
-                write!(f, "{}", col)?;
+                write!(f, "{col}")?;
             }
             writeln!(f)?;
         }
@@ -40,19 +40,19 @@ fn parse_input(filename: &str) -> Map {
     let _t = Timer::start(format!("Parsing file {filename}"));
     let source = read_file(filename);
     Map(source
-            .iter()
-            .map(|f| {
-                f.chars()
-                    .map(|c| match c {
-                        '.' => Contents::Space,
-                        '^' => Contents::Splitter,
-                        '|' => Contents::Beam,
-                        'S' => Contents::Emitter,
-                        _ => panic!("Unknown character {}", c),
-                    })
-                    .collect()
-            })
-            .collect())
+        .iter()
+        .map(|f| {
+            f.chars()
+                .map(|c| match c {
+                    '.' => Contents::Space,
+                    '^' => Contents::Splitter,
+                    '|' => Contents::Beam,
+                    'S' => Contents::Emitter,
+                    _ => panic!("Unknown character {c}"),
+                })
+                .collect()
+        })
+        .collect())
 }
 
 fn part_one(map: &Map) -> usize {
@@ -65,8 +65,7 @@ fn part_one(map: &Map) -> usize {
         debug_println!("Current state:\n{}", Map(map.clone()));
         for c_idx in 0..map[r_idx].len() {
             match map[r_idx][c_idx] {
-                Contents::Space => continue,
-                Contents::Splitter => continue,
+                Contents::Space | Contents::Splitter => (),
                 Contents::Beam | Contents::Emitter => {
                     // going to make a dangerous assumption that no splitter exists on the edges of the map.
                     // Only Space and Splitter could exist in the next row
@@ -75,16 +74,14 @@ fn part_one(map: &Map) -> usize {
                         Contents::Splitter => {
                             count += 1;
                             // TODO: What if either is a splitter? I think this may need to be recursive!
-                            if map[r_idx + 1][c_idx - 1] == Contents::Splitter {
-                                panic!(
-                                    "Splitter at r_idx+1, c_idx-1, where we were going to put a beam"
-                                );
-                            }
-                            if map[r_idx + 1][c_idx + 1] == Contents::Splitter {
-                                panic!(
-                                    "Splitter at r_idx+1, c_idx+1, where we were going to put a beam"
-                                );
-                            }
+                            assert!(
+                                map[r_idx + 1][c_idx - 1] != Contents::Splitter,
+                                "Splitter at r_idx+1, c_idx-1, where we were going to put a beam"
+                            );
+                            assert!(
+                                map[r_idx + 1][c_idx + 1] != Contents::Splitter,
+                                "Splitter at r_idx+1, c_idx+1, where we were going to put a beam"
+                            );
                             map[r_idx + 1][c_idx - 1] = Contents::Beam;
                             map[r_idx + 1][c_idx + 1] = Contents::Beam;
                         }
