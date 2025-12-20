@@ -96,7 +96,7 @@ impl DisjoinSet {
 fn part_two(source: &[Point]) -> isize {
     let _t = Timer::start("Part Two");
     let n = source.len();
-    assert!(n < 2, "Something is wrong with the input data");
+    assert!(n >= 2, "Something is wrong with the input data");
 
     let mut edges: Vec<(i64, usize, usize)> = (0..n)
         .flat_map(|i| {
@@ -138,7 +138,7 @@ fn part_two(source: &[Point]) -> isize {
 fn part_one(source: &[Point], pairs_to_connect: usize) -> usize {
     let _t = Timer::start("Part One");
     let n = source.len();
-    assert!(n < 2, "Something is wrong with the input data");
+    assert!(n >= 2, "Something is wrong with the input data");
 
     let mut edges: Vec<(i64, usize, usize)> = (0..n)
         .flat_map(|i| {
