@@ -96,11 +96,41 @@ fn part_one(map: &Map) -> usize {
     count
 }
 
+fn part_two(map: &Map) -> usize {
+    let _t = Timer::start("Part Two");
+    let map = map.0.clone();
+    let row_count = map.len();
+    let mut count_map: Vec<Vec<usize>> = vec![vec![0; map[0].len()]; map[0].len()];
+    // Set the emitter to 1.  There will always be an emitter in the first line
+    count_map[0][map[0].iter().position(|f| *f == Contents::Emitter).unwrap()] = 1;
+    for r_idx in 1..row_count - 1 {
+        //debug_println!("{:?}", print_interleved_count_map(&count_map, &map));
+        for c_idx in 0..map[r_idx].len() {
+            //debug_println!("{r_idx},{c_idx}");
+            match map[r_idx][c_idx] {
+                Contents::Splitter => {
+                    // I've validated in the data source that no splitter appears at the edges
+                    let prev_count = count_map[r_idx - 1][c_idx];
+                    count_map[r_idx][c_idx - 1] += prev_count;
+                    count_map[r_idx][c_idx + 1] += prev_count;
+                }
+                _ => {
+                    count_map[r_idx][c_idx] += count_map[r_idx - 1][c_idx];
+                }
+            }
+        }
+    }
+    let answer: usize = count_map.last().unwrap().iter().sum::<usize>();
+    println!("Part Two Result: {answer}");
+    answer
+}
+
 fn main() {
     let _t = Timer::start("Day 7");
     let source: Map = parse_input("./data/day7.txt");
     debug_println!("{source}");
     part_one(&source);
+    part_two(&source);
 }
 
 #[cfg(test)]
@@ -112,5 +142,11 @@ mod tests {
     fn test_part_one_from_sample_data() {
         let source: Map = parse_input("./data/day7_test");
         assert_eq!(part_one(&source), 21);
+    }
+
+    #[rstest]
+    fn test_part_two_from_sample_data() {
+        let source: Map = parse_input("./data/day7_test");
+        assert_eq!(part_two(&source), 40);
     }
 }
