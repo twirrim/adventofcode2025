@@ -179,6 +179,7 @@ fn part_one(source: &[Point], pairs_to_connect: usize) -> usize {
 }
 
 fn main() {
+    let _t = Timer::start("Day 8");
     let data = parse_input("./data/day8.txt");
     part_one(&data, 1000);
     part_two(&data);
