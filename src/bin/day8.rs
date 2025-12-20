@@ -36,9 +36,11 @@ fn parse_input(filename: &str) -> Vec<Point> {
         .collect()
 }
 
+#[derive(Debug)]
 struct DisjoinSet {
     parent: Vec<usize>,
     size: Vec<usize>,
+    num_groups: usize,
 }
 
 impl DisjoinSet {
@@ -46,6 +48,7 @@ impl DisjoinSet {
         Self {
             parent: (0..n).collect(),
             size: vec![1; n],
+            num_groups: n,
         }
     }
 
@@ -73,6 +76,7 @@ impl DisjoinSet {
                 self.parent[root_j] = root_i;
                 self.size[root_i] += self.size[root_j];
             }
+            self.num_groups -= 1;
         }
     }
 
@@ -87,6 +91,51 @@ impl DisjoinSet {
         }
         counts
     }
+}
+
+fn part_two(source: &[Point]) -> isize {
+    let _t = Timer::start("Part Two");
+    let n = source.len();
+    if n < 2 {
+        panic!("Something is wrong with the input data");
+    }
+
+    let mut edges: Vec<(i64, usize, usize)> = (0..n)
+        .flat_map(|i| {
+            (i + 1..n).map(move |j| {
+                let d = source[i].dist_sq(&source[j]);
+                (d, i, j)
+            })
+        })
+        .collect();
+    //debug_println!("{:?}", edges);
+
+    // I think we need to sort here?
+    edges.sort_unstable_by_key(|a| a.0);
+
+    // Build the disjoint
+    let mut dsu = DisjoinSet::new(n);
+    let mut count = 0;
+    let mut answer: isize = 0;
+    for (_, i, j) in edges {
+        count += 1;
+        debug_println!("#### Adding union between {i} and {j}");
+        dsu.union(i, j);
+        if dsu.num_groups == 1 {
+            // We can quit!
+            debug_println!("Stopped after {count} connections");
+            debug_println!(
+                "Final connection was between {:?} and {:?}",
+                source[i],
+                source[j]
+            );
+            answer = source[i].x * source[j].x;
+            break;
+        }
+    }
+
+    println!("Part Two Result: {answer}");
+    answer
 }
 
 fn part_one(source: &[Point], pairs_to_connect: usize) -> usize {
@@ -130,12 +179,14 @@ fn part_one(source: &[Point], pairs_to_connect: usize) -> usize {
     let mut answer = 1;
     (0..3).for_each(|_| answer *= biggest_sizes.pop().unwrap());
     println!("Part One Result: {answer}");
+
     answer
 }
 
 fn main() {
     let data = parse_input("./data/day8.txt");
     part_one(&data, 1000);
+    part_two(&data);
 }
 
 #[cfg(test)]
