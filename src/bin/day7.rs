@@ -67,13 +67,12 @@ fn part_one(map: &Map) -> usize {
             match map[r_idx][c_idx] {
                 Contents::Space | Contents::Splitter => (),
                 Contents::Beam | Contents::Emitter => {
-                    // going to make a dangerous assumption that no splitter exists on the edges of the map.
-                    // Only Space and Splitter could exist in the next row
+                    // I've validated that no splitter appears on the edges of the map.
+                    // Emitter only exists on first row.  Only Space and Splitter could exist in the next row
                     match map[r_idx + 1][c_idx] {
                         Contents::Space => map[r_idx + 1][c_idx] = Contents::Beam,
                         Contents::Splitter => {
                             count += 1;
-                            // TODO: What if either is a splitter? I think this may need to be recursive!
                             assert!(
                                 map[r_idx + 1][c_idx - 1] != Contents::Splitter,
                                 "Splitter at r_idx+1, c_idx-1, where we were going to put a beam"
@@ -100,13 +99,11 @@ fn part_two(map: &Map) -> usize {
     let _t = Timer::start("Part Two");
     let map = map.0.clone();
     let row_count = map.len();
-    let mut count_map: Vec<Vec<usize>> = vec![vec![0; map[0].len()]; map[0].len()];
+    let mut count_map: Vec<Vec<usize>> = vec![vec![0; map[0].len()]; map.len()];
     // Set the emitter to 1.  There will always be an emitter in the first line
     count_map[0][map[0].iter().position(|f| *f == Contents::Emitter).unwrap()] = 1;
-    for r_idx in 1..row_count - 1 {
-        //debug_println!("{:?}", print_interleved_count_map(&count_map, &map));
+    for r_idx in 1..row_count {
         for c_idx in 0..map[r_idx].len() {
-            //debug_println!("{r_idx},{c_idx}");
             match map[r_idx][c_idx] {
                 Contents::Splitter => {
                     // I've validated in the data source that no splitter appears at the edges
