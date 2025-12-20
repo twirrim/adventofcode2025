@@ -96,9 +96,7 @@ impl DisjoinSet {
 fn part_two(source: &[Point]) -> isize {
     let _t = Timer::start("Part Two");
     let n = source.len();
-    if n < 2 {
-        panic!("Something is wrong with the input data");
-    }
+    assert!(n < 2, "Something is wrong with the input data");
 
     let mut edges: Vec<(i64, usize, usize)> = (0..n)
         .flat_map(|i| {
@@ -108,7 +106,6 @@ fn part_two(source: &[Point]) -> isize {
             })
         })
         .collect();
-    //debug_println!("{:?}", edges);
 
     // I think we need to sort here?
     edges.sort_unstable_by_key(|a| a.0);
@@ -141,9 +138,7 @@ fn part_two(source: &[Point]) -> isize {
 fn part_one(source: &[Point], pairs_to_connect: usize) -> usize {
     let _t = Timer::start("Part One");
     let n = source.len();
-    if n < 2 {
-        panic!("Something is wrong with the input data");
-    }
+    assert!(n < 2, "Something is wrong with the input data");
 
     let mut edges: Vec<(i64, usize, usize)> = (0..n)
         .flat_map(|i| {
@@ -155,7 +150,7 @@ fn part_one(source: &[Point], pairs_to_connect: usize) -> usize {
         .collect();
     debug_println!("{:?}", edges);
 
-    // Don't do a full sort, QuickSelect will help
+    // Don't do a full sort, QuickSelect will help us here.  We're picking the nth smallest by key.
     if pairs_to_connect < edges.len() {
         edges.select_nth_unstable_by_key(pairs_to_connect, |a| a.0);
         edges.truncate(pairs_to_connect);
@@ -198,5 +193,11 @@ mod tests {
     fn test_part_one_from_sample_data() {
         let source = parse_input("./data/day8_test");
         assert_eq!(part_one(&source, 10), 40);
+    }
+
+    #[rstest]
+    fn test_part_two_from_sample_data() {
+        let source = parse_input("./data/day8_test");
+        assert_eq!(part_two(&source), 25272);
     }
 }
