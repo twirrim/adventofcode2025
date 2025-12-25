@@ -8,4 +8,5 @@ rstest = "0.26.1"
 
 [dependencies]
 indicatif = {version = "0.18.3", features = ["rayon"] }
+itertools = "0.14.0"
 rayon = "1.11.0"
