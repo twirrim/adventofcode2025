@@ -13,7 +13,7 @@ const REGEX: LazyLock<Regex> = LazyLock::new(|| {
 #[derive(Debug, PartialEq)]
 struct Present {
     index: usize,
-    shapes: Vec<[[u8; 3]; 3]>,
+    shapes: Vec<[u8; 3]>,
 }
 
 impl Present {
@@ -22,13 +22,13 @@ impl Present {
         let mut shapes = vec![];
         for _rotate in 0..4 {
             for _flip in 0..2 {
-                let mut new_shape = [[0u8; 3]; 3];
+                let mut new_shape = [0u8; 3];
                 for r in 0..3 {
                     let row = shape[r].chars().collect::<Vec<_>>();
                     for i in 0..3 {
-                        new_shape[r][i] = match row[i] {
-                            '.' => 0u8,
-                            '#' => 1u8,
+                        match row[i] {
+                            '.' => (),                         // don't need to do anything with 0s.
+                            '#' => new_shape[r] += 1 << 2 - i, // 2 - i to reverse the ordering.
                             _ => panic!("Invalid shape"),
                         }
                     }
@@ -103,7 +103,6 @@ fn parse_input(filename: &str) -> Problem {
             debug_println!("{:?}", caps);
             if let Some(p_index) = &caps.name("p_index") {
                 let p_index = p_index.as_str().trim_matches(':');
-                println!("It's an package line! We got index: {p_index}");
                 let shape: [String; 3] = [
                     source.next().unwrap(),
                     source.next().unwrap(),
@@ -179,12 +178,12 @@ mod tests {
             Present {
                 index: 0,
                 shapes: vec![
-                    [[1, 1, 0], [1, 0, 0], [1, 1, 0]],
-                    [[0, 1, 1], [0, 0, 1], [0, 1, 1]],
-                    [[1, 1, 1], [1, 0, 1], [0, 0, 0]],
-                    [[0, 1, 1], [0, 0, 1], [0, 1, 1]],
-                    [[1, 1, 0], [1, 0, 0], [1, 1, 0]],
-                    [[0, 0, 0], [1, 0, 1], [1, 1, 1]]
+                    [6, 4, 6],
+                    [3, 1, 3],
+                    [7, 5, 0],
+                    [3, 1, 3],
+                    [6, 4, 6],
+                    [0, 5, 7]
                 ]
             }
         );
