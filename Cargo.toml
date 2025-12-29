@@ -5,13 +5,16 @@ edition = "2024"
 rust-version = "1.88"
 
 [profile.release]
+debug=true
 codegen-units = 1
 lto = "fat"
 
 [dev-dependencies]
-rstest = "0.26.1"
+rstest = "0.26"
 
 [dependencies]
-indicatif = {version = "0.18.3", features = ["rayon"] }
-itertools = "0.14.0"
-rayon = "1.11.0"
+ahash = "0.8.12"
+indicatif = {version = "0.18", features = ["rayon"] }
+itertools = "0.14"
+rayon = "1.11"
+regex = "1.12.2"
